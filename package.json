@@ -1,0 +1,61 @@
+{
+  "name": "dynamite",
+  "version": "1.0.0",
+  "description": "Type-safe DynamoDB library with first-class single-table design support and full type inference",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test:unit": "vitest --run src/__tests__/unit",
+    "test:integration": "vitest --run src/__tests__/integration",
+    "test:e2e": "vitest --run src/__tests__/e2e",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepublishOnly": "npm run typecheck && npm run build && npm run test:unit && npm run test:integration && npm run test:e2e"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-dynamodb-streams": "^3.521.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.521.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@vitest/coverage-v8": "^4.0.18",
+    "prettier": "^3.8.1",
+    "testcontainers": "^11.11.0",
+    "typescript": "^5.9.3",
+    "vitest": "^1.5.0"
+  },
+  "keywords": [
+    "dynamodb",
+    "typescript",
+    "orm",
+    "database",
+    "aws",
+    "single-table-design",
+    "type-safe",
+    "multi-table",
+    "dynamodb-client"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/dynamite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/dynamite/issues"
+  },
+  "homepage": "https://github.com/yourusername/dynamite#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
