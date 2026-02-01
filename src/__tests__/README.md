@@ -13,25 +13,25 @@ This directory contains comprehensive tests for the DynamoDB TypeScript library.
 ### All Tests
 
 ```bash
-npm test
+bun test
 ```
 
 ### Unit Tests Only
 
 ```bash
-npm run test:unit
+bun run test:unit
 ```
 
 ### Integration Tests Only
 
 ```bash
-npm run test:integration
+bun run test:integration
 ```
 
 ### E2E Tests Only
 
 ```bash
-npm run test:e2e
+bun run test:e2e
 ```
 
 ## Setting Up DynamoDB Local

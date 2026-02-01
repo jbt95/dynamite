@@ -19,10 +19,6 @@ A type-first DynamoDB library for TypeScript with single-table design, multi-tab
 ## Install
 
 ```bash
-npm install dynamite
-# or
-yarn add dynamite
-# or
 bun add dynamite
 ```
 
@@ -334,16 +330,16 @@ const user = (await db.tables.main.User.get({ id: "123" })).unwrap();
 
 ```bash
 # Run all tests
-npm test
+bun test
 
 # Unit tests only
-npm run test:unit
+bun run test:unit
 
 # Integration tests (requires DynamoDB Local)
-npm run test:integration
+bun run test:integration
 
 # Type checking
-npm run typecheck
+bun run typecheck
 ```
 
 ### Setting Up DynamoDB Local
