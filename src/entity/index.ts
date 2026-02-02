@@ -16,6 +16,7 @@ export type {
   EntityPK,
   EntitySK,
   EntityGSIs,
+  EntityGSIName,
   GSIKey,
   GSIConfig,
 } from "./types";

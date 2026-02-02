@@ -153,9 +153,12 @@ class EntityBuilder<
     TAttributes,
     TPk,
     TSk,
-    readonly [...TGSIs, GSIKey<TAttributes, TConfig["pk"], TConfig["sk"]>]
+    readonly [
+      ...TGSIs,
+      GSIKey<TAttributes, TConfig["pk"], TConfig["sk"], any, any, TGsiName>,
+    ]
   > {
-    const gsiKey: GSIKey<TAttributes, TConfig["pk"], TConfig["sk"]> = {
+    const gsiKey: GSIKey<TAttributes, TConfig["pk"], TConfig["sk"], any, any, TGsiName> = {
       name,
       partitionKey: createKey(this.attributes, config.pk),
       sortKey: config.sk ? createKey(this.attributes, config.sk) : undefined,
@@ -166,7 +169,10 @@ class EntityBuilder<
     return new EntityBuilder(this.name, this.attributes, this.pkTemplate, this.skTemplate, [
       ...this.gsiKeys,
       gsiKey,
-    ] as unknown as readonly [...TGSIs, GSIKey<TAttributes, TConfig["pk"], TConfig["sk"]>]);
+    ] as unknown as readonly [
+      ...TGSIs,
+      GSIKey<TAttributes, TConfig["pk"], TConfig["sk"], any, any, TGsiName>,
+    ]);
   }
 
   /**
@@ -189,7 +195,8 @@ class EntityBuilder<
     TAttributes,
     InferShape<TAttributes>,
     TPk extends KeyDefinition<string> ? ExtractKeyData<TAttributes, TPk> : never,
-    TSk extends KeyDefinition<string> ? ExtractKeyData<TAttributes, TSk> : never
+    TSk extends KeyDefinition<string> ? ExtractKeyData<TAttributes, TSk> : never,
+    TGSIs
   > {
     if (!this.pkTemplate) {
       throw new Error(`Entity ${this.name} must define a partition key`);
@@ -215,6 +222,6 @@ class EntityBuilder<
       _data: undefined as unknown as InferShape<TAttributes>,
       _pk: undefined as unknown as PKType,
       _sk: undefined as unknown as SKType | undefined,
-    } as unknown as Entity<TName, TAttributes, InferShape<TAttributes>, PKType, SKType>;
+    } as unknown as Entity<TName, TAttributes, InferShape<TAttributes>, PKType, SKType, TGSIs>;
   }
 }

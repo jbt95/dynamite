@@ -15,7 +15,7 @@ import {
   BatchWriteItemCommand,
   AttributeValue,
 } from "@aws-sdk/client-dynamodb";
-import type { Entity, EntityType } from "@/entity";
+import type { Entity, EntityGSIName, EntityType } from "@/entity";
 import type { Table } from "@/table";
 import { marshalItem, unmarshalItem } from "@/schema";
 import { buildPartitionKey, buildSortKey } from "@/entity";
@@ -285,7 +285,10 @@ export class Repository<TEntity extends Entity<any, any, any, any, any>> {
   /**
    * Create a GSI query builder for this entity.
    */
-  gsi(gsiName: string, partitionKeyValue: Record<string, unknown>): GSIQueryBuilder<TEntity> {
+  gsi(
+    gsiName: EntityGSIName<TEntity>,
+    partitionKeyValue: Record<string, unknown>
+  ): GSIQueryBuilder<TEntity> {
     return new GSIQueryBuilder(this.client, this.table, this.entity, gsiName, partitionKeyValue);
   }
 

@@ -2,8 +2,9 @@
  * Unit tests for entity definition using the new API.
  */
 
-import { describe, it, expect } from "vitest";
-import { buildPartitionKey, buildSortKey } from "@/entity";
+import { describe, it, expect, expectTypeOf } from "vitest";
+import { buildPartitionKey, buildSortKey, type EntityGSIName } from "@/entity";
+import type { Repository } from "@/repository";
 import { entity } from "@/index";
 import { S } from "@/schema";
 import { ModernUser, ModernOrder } from "@/__tests__/helpers/test-entities";
@@ -44,6 +45,30 @@ describe("entity() function", () => {
     expect(Product.name).toBe("Product");
     expect(Product.gsiKeys).toHaveLength(1);
     expect(Product.gsiKeys?.[0].name).toBe("CategoryIndex");
+  });
+
+  it("should infer GSI names for autocomplete", () => {
+    const Product = entity("Product", {
+      id: S.string,
+      category: S.string,
+      price: S.number,
+    })
+      .partitionKey({ parts: [{ literal: "PRODUCT" }, { attr: "id" }] })
+      .gsi("CategoryIndex", {
+        pk: { parts: [{ attr: "category" }] },
+        projection: "ALL",
+      })
+      .gsi("PriceIndex", {
+        pk: { parts: [{ attr: "price" }] },
+        projection: "ALL",
+      })
+      .build();
+
+    type GsiNames = EntityGSIName<typeof Product>;
+    expectTypeOf<GsiNames>().toEqualTypeOf<"CategoryIndex" | "PriceIndex">();
+
+    type RepoGsiName = Parameters<Repository<typeof Product>["gsi"]>[0];
+    expectTypeOf<RepoGsiName>().toEqualTypeOf<"CategoryIndex" | "PriceIndex">();
   });
 
   it("should have phantom types for type inference", () => {

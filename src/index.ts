@@ -70,6 +70,7 @@ export {
   buildGSIKey,
   type Entity,
   type EntityType,
+  type EntityGSIName,
   type GSIKey,
   type EntityAttributes,
 } from "@/entity";

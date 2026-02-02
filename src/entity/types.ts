@@ -27,8 +27,9 @@ export interface GSIKey<
   TSk extends KeyDefinition<keyof TAttributes & string> | undefined = undefined,
   TPkData = any,
   TSkData = any,
+  TName extends string = string,
 > {
-  readonly name: string;
+  readonly name: TName;
   readonly partitionKey: KeyTemplate<TAttributes, TPk, TPkData>;
   readonly sortKey?: KeyTemplate<TAttributes, KeyDefinition<keyof TAttributes & string>, TSkData>;
   readonly projection: "ALL" | "KEYS_ONLY" | "INCLUDE";
@@ -50,6 +51,14 @@ export interface Entity<
   TData = EntityData<TAttributes>,
   TPkData = any,
   TSkData = any,
+  TGSIs extends readonly GSIKey<TAttributes, any, any, any, any, any>[] = readonly GSIKey<
+    TAttributes,
+    any,
+    any,
+    any,
+    any,
+    any
+  >[],
 > {
   // Core properties
   readonly name: TName;
@@ -60,7 +69,7 @@ export interface Entity<
     TPkData
   >;
   readonly sortKey?: KeyTemplate<TAttributes, KeyDefinition<keyof TAttributes & string>, TSkData>;
-  readonly gsiKeys?: GSIKey<TAttributes, any, any>[];
+  readonly gsiKeys?: TGSIs;
   readonly attributes: TAttributes;
 
   // Phantom type properties for type inference (not actual runtime values)
@@ -79,7 +88,7 @@ export interface Entity<
  * const User = entity("User", { id: S.string() }).build();
  * type UserType = EntityType<typeof User>; // { id: string }
  */
-export type EntityType<T extends Entity<any, any, any, any, any>> = T["_data"];
+export type EntityType<T extends Entity<any, any, any, any, any, any>> = T["_data"];
 
 /**
  * Extract the partition key input type from an entity.
@@ -87,7 +96,7 @@ export type EntityType<T extends Entity<any, any, any, any, any>> = T["_data"];
  * @example
  * type UserPK = EntityPK<typeof User>; // { id: string }
  */
-export type EntityPK<T extends Entity<any, any, any, any, any>> = T["_pk"];
+export type EntityPK<T extends Entity<any, any, any, any, any, any>> = T["_pk"];
 
 /**
  * Extract the sort key input type from an entity.
@@ -96,7 +105,7 @@ export type EntityPK<T extends Entity<any, any, any, any, any>> = T["_pk"];
  * @example
  * type UserSK = EntitySK<typeof User>; // { orderId: string } | undefined
  */
-export type EntitySK<T extends Entity<any, any, any, any, any>> = T["_sk"];
+export type EntitySK<T extends Entity<any, any, any, any, any, any>> = T["_sk"];
 
 /**
  * Configuration for adding a GSI to an entity.
@@ -111,5 +120,19 @@ export interface GSIConfig<TAttributes extends EntityAttributes> {
 /**
  * Extract GSI key types from entity.
  */
-export type EntityGSIs<T extends Entity<any, any, any, any, any>> =
-  T["gsiKeys"] extends readonly GSIKey<any, any, any>[] ? T["gsiKeys"] : never;
+export type EntityGSIs<T extends Entity<any, any, any, any, any, any>> =
+  NonNullable<T["gsiKeys"]> extends readonly GSIKey<any, any, any, any, any, any>[]
+    ? NonNullable<T["gsiKeys"]>
+    : never;
+
+/**
+ * Extract GSI names from entity.
+ */
+export type EntityGSIName<T extends Entity<any, any, any, any, any, any>> =
+  EntityGSIs<T> extends readonly (infer TGsi)[]
+    ? TGsi extends { name: infer TName }
+      ? TName extends string
+        ? TName
+        : never
+      : never
+    : never;

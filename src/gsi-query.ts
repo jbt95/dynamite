@@ -11,7 +11,7 @@ import {
   QueryCommandInput,
   AttributeValue,
 } from "@aws-sdk/client-dynamodb";
-import type { Entity, EntityType, GSIKey } from "@/entity/types";
+import type { Entity, EntityType, EntityGSIName, GSIKey } from "@/entity/types";
 import type { Table } from "@/table";
 import { unmarshalItem } from "@/schema";
 import { buildKey } from "@/keys";
@@ -56,7 +56,7 @@ export class GSIQueryBuilder<TEntity extends Entity<any, any, any, any, any>> {
     private readonly client: DynamoDBClient,
     private readonly table: Table<any, any, any, any>,
     private readonly entity: TEntity,
-    gsiName: string,
+    gsiName: EntityGSIName<TEntity>,
     partitionKeyValue: Record<string, unknown>
   ) {
     // Find GSI config

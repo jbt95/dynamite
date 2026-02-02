@@ -51,8 +51,8 @@ describe("Transaction E2E", () => {
       .entities([TestUser])
       .build();
 
-    userRepo = db.tables.test.TestUser;
     transactionManager = new TransactionManager(client);
+    userRepo = db.getRepository(TestUser);
 
     // Create the table first and clear any existing data
     await setupTestTable(client, "test-table");

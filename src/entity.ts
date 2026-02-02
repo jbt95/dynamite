@@ -23,8 +23,9 @@ export interface GSIKey<
   TAttributes extends EntityAttributes = EntityAttributes,
   TPk extends KeyDefinition<keyof TAttributes & string> = KeyDefinition<keyof TAttributes & string>,
   TSk extends KeyDefinition<keyof TAttributes & string> | undefined = undefined,
+  TName extends string = string,
 > {
-  readonly name: string;
+  readonly name: TName;
   readonly partitionKey: KeyTemplate<TAttributes, TPk, any>;
   readonly sortKey?: KeyTemplate<TAttributes, KeyDefinition<keyof TAttributes & string>, any>;
   readonly projection: "ALL" | "KEYS_ONLY" | "INCLUDE";
@@ -37,6 +38,12 @@ export interface Entity<
   TData = EntityData<TAttributes>,
   TPkData = any,
   TSkData = any,
+  TGSIs extends readonly GSIKey<TAttributes, any, any, any>[] = readonly GSIKey<
+    TAttributes,
+    any,
+    any,
+    any
+  >[],
 > {
   readonly name: TName;
   readonly schema: SchemaDef;
@@ -46,7 +53,7 @@ export interface Entity<
     TPkData
   >;
   readonly sortKey?: KeyTemplate<TAttributes, KeyDefinition<keyof TAttributes & string>, TSkData>;
-  readonly gsiKeys?: GSIKey<TAttributes, any, any>[];
+  readonly gsiKeys?: TGSIs;
   readonly attributes: TAttributes;
   /** @internal Phantom type for data shape inference */
   readonly _data: TData;
@@ -57,6 +64,15 @@ export interface Entity<
 }
 
 export type EntityType<T extends Entity<any, any, any, any, any>> = NonNullable<T["_data"]>;
+
+export type EntityGSIName<T extends Entity<any, any, any, any, any>> =
+  NonNullable<T["gsiKeys"]> extends readonly (infer TGsi)[]
+    ? TGsi extends { name: infer TName }
+      ? TName extends string
+        ? TName
+        : never
+      : never
+    : never;
 
 export interface GSIConfig<TAttributes extends EntityAttributes> {
   readonly pk: KeyDefinition<keyof TAttributes & string>;
@@ -91,9 +107,9 @@ export function buildSortKey<T extends Entity<any, any, any, any, any>>(
 /**
  * Build GSI key for an entity.
  */
-export function buildGSIKey(
-  entity: Entity<string, EntityAttributes, EntityData<EntityAttributes>>,
-  gsiName: string,
+export function buildGSIKey<T extends Entity<any, any, any, any, any>>(
+  entity: T,
+  gsiName: EntityGSIName<T>,
   pkValues: Record<string, unknown>,
   skValues?: Record<string, unknown>
 ): Result<{ pk: string; sk?: string }, Error> {
