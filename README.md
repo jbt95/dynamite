@@ -2,7 +2,6 @@
 
 A type-first DynamoDB library for TypeScript with single-table design, multi-table support, transactions, and full type inference.
 
-[![npm version](https://badge.fury.io/js/dynamite.svg)](https://badge.fury.io/js/dynamite)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -18,11 +17,15 @@ A type-first DynamoDB library for TypeScript with single-table design, multi-tab
 
 ## Install
 
-```bash
-bun add dynamite
-```
+> **Coming soon!** This package is not yet published to npm.
+>
+> For now, you can install from GitHub:
+>
+> ```bash
+> npm install github:yourusername/dynamite
+> ```
 
-## Quick Start (New API v1.0+)
+## Quick Start
 
 The new API provides a cleaner, more type-safe interface:
 
@@ -86,7 +89,7 @@ const user2 = await userRepo.get({ id: "456" });
 type UserType = EntityType<typeof User>; // { id: string; email: string; ... }
 ```
 
-## New API Features
+## Features
 
 ### Multi-Table Support
 
@@ -168,11 +171,21 @@ const optionalSchema = S.optional(S.string); // string | undefined
 
 // Default values
 const defaultSchema = S.string.default("value"); // string (with default)
+
+// Enhanced schema with validation and transformation
+import { schema } from "dynamite";
+
+const emailSchema = schema(S.string)
+  .validate((v) => v.includes("@") || "Invalid email")
+  .trim()
+  .toLowerCase()
+  .withDefault(() => "user@example.com")
+  .build();
 ```
 
-### Entity Definition (New API)
+### Entity Definition
 
-The new `entity()` function provides a cleaner API:
+Define entities with the `entity()` function:
 
 ```typescript
 import { entity, S } from "dynamite";
@@ -203,7 +216,7 @@ type UserType = EntityType<typeof User>; // { id: string; email: string; ... }
 type UserPK = EntityPK<typeof User>; // { id: string; }
 ```
 
-### Database Setup (New API)
+### Database Setup
 
 Create a database with one or more tables:
 
@@ -249,6 +262,38 @@ const activeUsers = await userRepo
   .scan()
   .where("isActive", "=", true)
   .toArray();
+
+// Batch operations
+const users = await userRepo.batchGet([
+  { pk: { id: "1" } },
+  { pk: { id: "2" } },
+]);
+
+await userRepo.batchPut([
+  { id: "1", email: "a@test.com", name: "A", age: 25 },
+  { id: "2", email: "b@test.com", name: "B", age: 30 },
+]);
+
+await userRepo.batchDelete([
+  { pk: { id: "1" } },
+  { pk: { id: "2" } },
+]);
+
+// Patch (partial update)
+await userRepo.patch(
+  { id: "123" },
+  {
+    set: { name: "New Name", status: "active" },
+    increment: { loginCount: 1 },
+    append: { tags: ["premium"] },
+  }
+);
+
+// Upsert (create or update)
+const result = await userRepo.upsert(userData);
+if (result.isOk()) {
+  console.log(result.value.created ? "Created" : "Updated");
+}
 ```
 
 ### Query Builder
@@ -305,6 +350,60 @@ const filtered = await db.tables.main.User.scan()
 const segment = await db.tables.main.User.scan()
   .parallelScan(0, 4) // Segment 0 of 4
   .toArray();
+```
+
+### Collections (Multi-Entity Queries)
+
+Query multiple entity types in a single request (single-table design pattern):
+
+```typescript
+// Fetch user and their orders in one query
+const { User: users, Order: orders } = await db.tables.main
+  .collection("User", "Order")("USER#123")
+  .execute();
+
+// Or get as flat array
+const items = await db.tables.main.collection("User", "Order")("USER#123").toArray();
+// Returns: [{ entity: "User", data: {...} }, { entity: "Order", data: {...} }]
+```
+
+### GSI Queries
+
+Query via Global Secondary Indexes with full type safety:
+
+```typescript
+// Query by email (assuming GSI "EmailIndex" exists)
+const users = await db.tables.main.User.gsi("EmailIndex", { email: "test@example.com" })
+  .sortKeyBeginsWith("2024")
+  .where("status", "=", "active")
+  .toArray();
+```
+
+### Database Transactions
+
+Execute atomic transactions across multiple entities:
+
+```typescript
+await db
+  .transaction()
+  .put("main", User, userData)
+  .put("main", Order, orderData)
+  .update("main", User, { id: "123" }, { set: { status: "active" } })
+  .delete("main", Order, { userId: "123", sk: { orderId: "456" } })
+  .execute();
+```
+
+### Database Batch Operations
+
+Efficient bulk operations across entities:
+
+```typescript
+await db
+  .batch()
+  .put("main", User, [user1, user2, user3])
+  .put("main", Order, [order1, order2])
+  .delete("main", Product, [{ id: "p1" }, { id: "p2" }])
+  .execute();
 ```
 
 ### Result Type
@@ -364,11 +463,3 @@ export DYNAMODB_ENDPOINT=http://localhost:8000
 ## License
 
 MIT © Jordi Bermejo Tornero
-
-## Contributing
-
-Contributions are welcome! Please read the [Contributing Guide](./CONTRIBUTING.md) for details.
-
-## Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for version history.

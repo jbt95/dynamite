@@ -45,6 +45,10 @@ import type {
   TableRepositories,
   TableRegistry,
 } from "./types";
+import { DatabaseTransactionBuilder } from "./transaction-builder";
+import { DatabaseBatchBuilder } from "./batch-builder";
+import { CollectionQueryBuilder } from "@/collection-query";
+import { buildPartitionKey } from "@/entity";
 
 /**
  * Database builder - entry point for creating typed database instances.
@@ -127,10 +131,31 @@ export class DatabaseBuilder<TTables extends readonly Table<any, any, any>[] = r
       }
 
       // Create table access with repositories spread directly
-      (tables as Record<string, TableAccess<Table<any, any, any>>>)[name] = {
+      const tableAccess: Record<string, unknown> = {
         table: table as any,
         ...tableRepos,
-      } as any;
+      };
+
+      // Add collection method
+      tableAccess.collection = (...entityNames: string[]) => {
+        const selectedEntities = table.entities.filter((e: Entity<any, any, any, any, any>) =>
+          entityNames.includes(e.name)
+        );
+        if (selectedEntities.length === 0) {
+          throw new Error(`No valid entities selected for collection`);
+        }
+        // Return a function that takes partition key value
+        return (partitionKeyValue: string) => {
+          return new CollectionQueryBuilder(
+            this.client,
+            legacyTable,
+            selectedEntities as Entity<any, any, any, any, any>[],
+            partitionKeyValue
+          );
+        };
+      };
+
+      (tables as Record<string, TableAccess<Table<any, any, any>>>)[name] = tableAccess as any;
     }
 
     return {
@@ -165,10 +190,10 @@ export class DatabaseBuilder<TTables extends readonly Table<any, any, any>[] = r
         }
       },
       transaction: () => {
-        throw new Error("Transaction not yet implemented");
+        return new DatabaseTransactionBuilder(this.client, this.tablesMap);
       },
       batch: () => {
-        throw new Error("Batch not yet implemented");
+        return new DatabaseBatchBuilder(this.client, this.tablesMap);
       },
     };
   }

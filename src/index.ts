@@ -163,3 +163,35 @@ export type {
 
 // Core path utilities
 export type { Paths, PathValue, LeafPaths, Prettify } from "@/core/paths";
+
+// ============================================
+// PHASE 1 & 2 FEATURES
+// ============================================
+
+// Collection queries (multi-entity)
+export { CollectionQueryBuilder } from "@/collection-query";
+
+// GSI queries
+export { GSIQueryBuilder } from "@/gsi-query";
+
+// Database transaction and batch builders
+export { DatabaseTransactionBuilder } from "@/database/transaction-builder";
+export { DatabaseBatchBuilder } from "@/database/batch-builder";
+
+// ============================================
+// PHASE 3 FEATURES - Enhanced Schema
+// ============================================
+
+// Enhanced schema with validators, transformers, defaults
+export {
+  schema,
+  type ValidatorFn,
+  type TransformerFn,
+  type DefaultFn,
+  type ComputedFn,
+  type ValidatedSchema,
+  type TransformedSchema,
+  type DefaultFnSchema,
+  type AliasedSchema,
+  type EnhancedSchemaDef,
+} from "@/schema/enhanced";

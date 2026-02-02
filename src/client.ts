@@ -74,9 +74,7 @@ function detectLocalEndpoint(): string | undefined {
 /**
  * Execute a DynamoDB operation and wrap result in Result.
  */
-export async function executeOperation<T>(
-  operation: () => Promise<T>
-): Promise<Result<T, Error>> {
+export async function executeOperation<T>(operation: () => Promise<T>): Promise<Result<T, Error>> {
   try {
     const result = await operation();
     return ok(result);

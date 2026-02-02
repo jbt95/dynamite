@@ -13,6 +13,26 @@ import type { QueryBuilder } from "@/query";
 import type { ScanBuilder } from "@/scan";
 import type { Repository } from "@/repository";
 import type { Result } from "@/result";
+import type { CollectionQueryBuilder } from "@/collection-query";
+
+/**
+ * Helper type to filter entities by name.
+ */
+type FilterEntities<
+  TEntities extends readonly Entity<any, any, any, any, any>[],
+  TName extends string,
+> = TEntities extends readonly [infer First, ...infer Rest]
+  ? First extends Entity<TName, any, any, any, any>
+    ? readonly [
+        First,
+        ...(Rest extends readonly Entity<any, any, any, any, any>[]
+          ? FilterEntities<Rest, TName>
+          : readonly []),
+      ]
+    : Rest extends readonly Entity<any, any, any, any, any>[]
+      ? FilterEntities<Rest, TName>
+      : readonly []
+  : readonly [];
 
 /**
  * Table configuration.
@@ -68,6 +88,12 @@ export type TableAccess<TTable extends Table<any, any, any>> = TableRepositories
 > & {
   /** Table definition */
   readonly table: TTable;
+  /**
+   * Query multiple entities as a collection.
+   */
+  collection<TSelected extends TTable["entities"][number]["name"]>(
+    ...entityNames: TSelected[]
+  ): CollectionQueryBuilder<FilterEntities<TTable["entities"], TSelected>>;
 };
 
 /**
@@ -145,42 +171,48 @@ export interface TransactionBuilder<TTables extends readonly Table<any, any, any
   /**
    * Add a put operation.
    */
-  put<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  put<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
     item: EntityType<TEntity>,
-    options?: { condition?: ConditionExpression<TEntity> }
+    condition?: string
   ): TransactionBuilder<TTables>;
 
   /**
    * Add an update operation.
    */
-  update<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  update<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
-    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : EntitySK<TEntity>),
-    updates: (builder: UpdateBuilder<EntityType<TEntity>>) => UpdateBuilder<EntityType<TEntity>>,
-    options?: { condition?: ConditionExpression<TEntity> }
+    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : { sk: EntitySK<TEntity> }),
+    updates: {
+      set?: Partial<EntityType<TEntity>>;
+      increment?: Record<string, number>;
+      decrement?: Record<string, number>;
+      append?: Record<string, unknown[]>;
+      remove?: string[];
+    },
+    condition?: string
   ): TransactionBuilder<TTables>;
 
   /**
    * Add a delete operation.
    */
-  delete<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  delete<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
-    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : EntitySK<TEntity>),
-    options?: { condition?: ConditionExpression<TEntity> }
+    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : { sk: EntitySK<TEntity> }),
+    condition?: string
   ): TransactionBuilder<TTables>;
 
   /**
    * Add a condition check.
    */
-  condition<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  condition<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
-    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : EntitySK<TEntity>),
-    condition: ConditionExpression<TEntity>
+    key: EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : { sk: EntitySK<TEntity> }),
+    condition: string
   ): TransactionBuilder<TTables>;
 
   /**
@@ -196,8 +228,8 @@ export interface BatchBuilder<TTables extends readonly Table<any, any, any>[]> {
   /**
    * Add put operations.
    */
-  put<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  put<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
     items: EntityType<TEntity>[] | EntityType<TEntity>
   ): BatchBuilder<TTables>;
@@ -205,16 +237,19 @@ export interface BatchBuilder<TTables extends readonly Table<any, any, any>[]> {
   /**
    * Add delete operations.
    */
-  delete<TTable extends TTables[number], TEntity extends TTable["entities"][number]>(
-    tableName: TTable["name"],
+  delete<TEntity extends Entity<any, any, any, any, any>>(
+    tableName: string,
     entity: TEntity,
-    keys: (EntityPK<TEntity> & (EntitySK<TEntity> extends undefined ? {} : EntitySK<TEntity>))[]
+    keys: (EntityPK<TEntity> &
+      (EntitySK<TEntity> extends undefined ? {} : { sk: EntitySK<TEntity> }))[]
   ): BatchBuilder<TTables>;
 
   /**
    * Execute the batch.
    */
-  execute(): Promise<Result<void, Error>>;
+  execute(options?: {
+    onProgress?: (processed: number, total: number) => void;
+  }): Promise<Result<void, Error>>;
 }
 
 /**

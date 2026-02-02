@@ -1,17 +1,26 @@
 {
   "name": "dynamite",
-  "version": "1.0.0",
+  "version": "0.1.0-alpha.1",
   "description": "Type-safe DynamoDB library with first-class single-table design support and full type inference",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
   "files": [
     "dist",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "test:unit": "vitest --run src/__tests__/unit",
     "test:integration": "vitest --run src/__tests__/integration",
     "test:e2e": "vitest --run src/__tests__/e2e",
@@ -31,6 +40,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "prettier": "^3.8.1",
     "testcontainers": "^11.11.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^1.5.0"
   },
